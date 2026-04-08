@@ -1,182 +1,114 @@
-// Database State (LocalStorage)
-let tasks = JSON.parse(localStorage.getItem('alvin_pro_tasks')) || [];
-let history = JSON.parse(localStorage.getItem('alvin_pro_history')) || [];
+const DB_TASK = 'alvin_vFinal_Tasks_Fix';
+const DB_HIST = 'alvin_vFinal_History_Fix';
+let tasks = JSON.parse(localStorage.getItem(DB_TASK)) || [];
+let history = JSON.parse(localStorage.getItem(DB_HIST)) || [];
 const alarm = document.getElementById('alarmSound');
 
-// 1. Fungsi Navigasi Halaman
-function switchPage(pageId) {
-    document.getElementById('input-page').classList.add('hidden-page');
-    document.getElementById('active-page').classList.add('hidden-page');
-    document.getElementById('history-page').classList.add('hidden-page');
-    
-    const buttons = ['btn-input', 'btn-active', 'btn-history'];
-    buttons.forEach(id => {
-        document.getElementById(id).classList.remove('tab-active');
-        document.getElementById(id).classList.add('text-white/70');
+function unlockAudio() {
+    alarm.play().then(() => {
+        alarm.pause();
+        alarm.currentTime = 0;
+        document.getElementById('audioUnlocker').classList.add('animate__fadeOut');
+        setTimeout(() => document.getElementById('audioUnlocker').style.display = 'none', 500);
     });
-
-    document.getElementById(pageId).classList.remove('hidden-page');
-    const activeBtn = 'btn-' + pageId.split('-')[0];
-    document.getElementById(activeBtn).classList.add('tab-active');
-    document.getElementById(activeBtn).classList.remove('text-white/70');
 }
 
-// 2. Fungsi Jam Realtime
 function updateClock() {
     const now = new Date();
-    document.getElementById('clock').innerText = now.toLocaleTimeString('id-ID');
-    document.getElementById('date').innerText = now.toLocaleDateString('id-ID', { 
-        weekday: 'long', 
-        day: 'numeric', 
-        month: 'long', 
-        year: 'numeric' 
+    const currentTimeMs = now.getTime();
+    document.getElementById('clock').innerText = now.toLocaleTimeString('id-ID', { hour12: false });
+    document.getElementById('date').innerText = now.toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long' });
+    
+    tasks.forEach((t, i) => {
+        const deadlineMs = new Date(t.date).getTime();
+        const remindAtMs = deadlineMs - (t.remindHours * 3600000);
+        // LOGIC: Jika sekarang sudah lewat waktu pengingat, langsung bunyi
+        if (currentTimeMs >= remindAtMs && !t.alerted) {
+            triggerAlarm(t.name, i);
+        }
     });
 }
 setInterval(updateClock, 1000);
-updateClock();
 
-// 3. Fungsi Sistem Alarm & Notifikasi
-function triggerAlarm(taskName) {
-    if ("Notification" in window && Notification.permission === "granted") {
-        new Notification("PENGINGAT DEADLINE", {
-            body: `Tugas "${taskName}" segera berakhir!`,
-            icon: "https://cdn-icons-png.flaticon.com/512/3135/3135715.png"
-        });
-        alarm.play().catch(e => console.log("Audio play deferred"));
-        // Alarm berbunyi selama 8 detik
-        setTimeout(() => { 
-            alarm.pause(); 
-            alarm.currentTime = 0; 
-        }, 8000);
-    }
+function triggerAlarm(taskName, index) {
+    tasks[index].alerted = true;
+    saveData();
+    alarm.currentTime = 0;
+    alarm.play().catch(() => alert("🔔 DEADLINE: " + taskName));
+    setTimeout(() => { alarm.pause(); alarm.currentTime = 0; }, 5000);
 }
 
-// 4. Fungsi Render Data ke UI
-function render() {
-    const list = document.getElementById('taskList');
-    const hist = document.getElementById('historyList');
-    const countLabel = document.getElementById('taskCount');
-    
-    list.innerHTML = '';
-    hist.innerHTML = '';
-
-    // Sort tugas berdasarkan deadline terdekat
-    tasks.sort((a, b) => new Date(a.date) - new Date(b.date));
-    countLabel.innerText = `${tasks.length} TUGAS AKTIF`;
-
-    // Render Tugas Aktif
-    if (tasks.length === 0) {
-        list.innerHTML = `<div class="bg-white p-16 rounded-3xl border-2 border-dashed text-center text-slate-300 font-bold uppercase tracking-widest">Tidak ada tugas aktif</div>`;
-    }
-
-    tasks.forEach((t, i) => {
-        const deadline = new Date(t.date);
-        const today = new Date();
-        today.setHours(0,0,0,0);
-        const diff = Math.ceil((deadline - today) / 86400000);
-        
-        let theme = "border-blue-700 bg-white";
-        let badge = "bg-slate-100 text-slate-500";
-
-        // Logic Alarm: H-1 Deadline
-        if (diff === 1) { 
-            theme = "border-red-600 bg-red-50 animate__animated animate__pulse animate__infinite"; 
-            badge = "bg-red-600 text-white";
-            triggerAlarm(t.name);
-        } else if (diff === 0) {
-            badge = "bg-orange-500 text-white";
-        }
-
-        list.innerHTML += `
-            <div class="${theme} border-l-[12px] p-6 rounded-2xl shadow-md flex items-center justify-between transition-all hover:scale-[1.02]">
-                <div class="flex items-center gap-6">
-                    <button onclick="confirmComplete(${i})" class="h-12 w-12 rounded-2xl border-2 border-slate-200 flex items-center justify-center hover:bg-green-500 hover:border-green-500 transition-all group shadow-sm bg-slate-50">
-                        <i class="fas fa-check text-transparent group-hover:text-white transition-all text-xl"></i>
-                    </button>
-                    <div>
-                        <span class="text-[10px] font-black text-blue-600 uppercase tracking-widest"><i class="fas fa-bookmark mr-1"></i> ${t.subject}</span>
-                        <h3 class="font-extrabold text-slate-800 text-xl leading-tight">${t.name}</h3>
-                        <div class="flex items-center gap-4 mt-2">
-                            <p class="text-xs font-bold text-slate-400"><i class="far fa-calendar-alt mr-1"></i> ${t.date}</p>
-                            <span class="text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-tighter ${badge}">
-                                ${diff < 0 ? 'Terlewati' : diff === 0 ? 'Hari Ini' : diff + ' Hari Lagi'}
-                            </span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        `;
-    });
-
-    // Render Riwayat
-    if (history.length === 0) {
-        hist.innerHTML = `<div class="bg-white p-16 rounded-3xl border-2 border-dashed text-center text-slate-300 font-bold uppercase tracking-widest">Belum ada riwayat</div>`;
-    }
-
-    history.forEach((h) => {
-        hist.innerHTML += `
-            <div class="bg-white border-l-8 border-green-500 p-5 rounded-2xl flex items-center justify-between shadow-sm opacity-90">
-                <div>
-                    <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">${h.subject}</p>
-                    <h3 class="font-bold text-slate-700 text-lg">${h.name}</h3>
-                    <p class="text-[10px] font-bold text-green-600 uppercase mt-1"><i class="fas fa-check-circle mr-1"></i> Selesai pada ${new Date().toLocaleDateString('id-ID')}</p>
-                </div>
-                <div class="h-10 w-10 bg-green-100 rounded-full flex items-center justify-center text-green-600">
-                    <i class="fas fa-check"></i>
-                </div>
-            </div>
-        `;
-    });
-
-    // Simpan ke LocalStorage
-    localStorage.setItem('alvin_pro_tasks', JSON.stringify(tasks));
-    localStorage.setItem('alvin_pro_history', JSON.stringify(history));
-}
-
-// 5. Fungsi Tambah Tugas
 function addTask() {
     const name = document.getElementById('taskInput').value;
-    const subject = document.getElementById('subjectInput').value;
-    const date = document.getElementById('dateInput').value;
-    
-    if (name && subject && date) {
-        tasks.push({ name, subject, date });
-        // Reset Input
+    const subj = document.getElementById('subjectInput').value;
+    const date = document.getElementById('dateInput_only').value;
+    const time = document.getElementById('timeInput_only').value;
+    const remind = document.querySelector('input[name="reminder"]:checked').value;
+
+    if (name && subj && date && time) {
+        tasks.push({ name, subject: subj, date: `${date}T${time}`, remindHours: parseInt(remind), alerted: false });
         document.getElementById('taskInput').value = '';
         document.getElementById('subjectInput').value = '';
-        document.getElementById('dateInput').value = '';
-        
         render();
-        alert("Tugas berhasil disimpan! Silakan cek di halaman Daftar Tugas.");
         switchPage('active-page');
-    } else {
-        alert("Mohon isi semua data!");
-    }
+    } else { alert("Vin, isi semua datanya dulu!"); }
 }
 
-// 6. Fungsi Konfirmasi Selesai
-function confirmComplete(index) {
-    const taskName = tasks[index].name;
-    if(confirm(`Selesaikan tugas "${taskName}"?`)) {
-        const done = tasks.splice(index, 1);
-        history.unshift(done[0]);
-        render();
-        // Hentikan alarm jika sedang bunyi
-        alarm.pause();
-        alarm.currentTime = 0;
-    }
+function render() {
+    const taskList = document.getElementById('taskList');
+    const historyList = document.getElementById('historyList');
+    taskList.innerHTML = ''; historyList.innerHTML = '';
+    document.getElementById('taskCount').innerText = tasks.length;
+    
+    // Render Tugas Aktif
+    tasks.sort((a, b) => new Date(a.date) - new Date(b.date)).forEach((t, i) => {
+        const d = new Date(t.date);
+        taskList.innerHTML += `
+            <div class="task-card animate__animated animate__fadeInUp">
+                <div class="flex-1 min-w-0 pr-4">
+                    <span class="text-[9px] font-black text-blue-700 bg-blue-50 px-3 py-1 rounded-lg uppercase tracking-widest"><i class="fas fa-graduation-cap mr-1"></i>${t.subject}</span>
+                    <h3 class="font-bold text-slate-800 text-base truncate uppercase mt-2">${t.name}</h3>
+                    <p class="text-[10px] font-bold text-slate-400 mt-2"><i class="far fa-clock mr-1"></i>${d.toLocaleDateString('id-ID')} | ${d.getHours().toString().padStart(2,'0')}:${d.getMinutes().toString().padStart(2,'0')}</p>
+                </div>
+                <button onclick="markAsDone(${i})" class="check-btn"><i class="fas fa-check"></i></button>
+            </div>`;
+    });
+
+    // Render Riwayat dengan Nama MK (Mata Kuliah)
+    history.forEach(h => {
+        historyList.innerHTML += `
+            <div class="bg-white/70 p-5 rounded-2xl flex justify-between items-center border border-dashed border-slate-200 opacity-80">
+                <div class="min-w-0">
+                    <p class="text-[9px] font-black text-blue-500 uppercase tracking-tighter">${h.subject}</p>
+                    <p class="text-sm font-bold text-slate-700 uppercase truncate">${h.name}</p>
+                    <p class="text-[8px] font-bold text-green-600 uppercase mt-1"><i class="fas fa-check-circle mr-1"></i>Selesai pada ${h.doneTime}</p>
+                </div>
+                <div class="text-green-500 bg-green-50 p-3 rounded-full"><i class="fas fa-award text-lg"></i></div>
+            </div>`;
+    });
+    saveData();
 }
 
-// 7. Fungsi Hapus Riwayat
-function clearHistory() { 
-    if(confirm("Hapus permanen semua riwayat?")) { 
-        history = []; 
-        render(); 
-    } 
+function markAsDone(index) {
+    const doneTask = tasks.splice(index, 1)[0];
+    doneTask.doneTime = new Date().toLocaleTimeString('id-ID', { hour12: false });
+    history.unshift(doneTask);
+    render();
 }
 
-// Inisialisasi saat load
-if ("Notification" in window) {
-    Notification.requestPermission();
+function saveData() {
+    localStorage.setItem(DB_TASK, JSON.stringify(tasks));
+    localStorage.setItem(DB_HIST, JSON.stringify(history));
 }
+
+function switchPage(pageId) {
+    ['input-page', 'active-page', 'history-page'].forEach(id => document.getElementById(id).classList.add('hidden'));
+    document.getElementById(pageId).classList.remove('hidden');
+    document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('tab-active'));
+    document.getElementById('btn-' + pageId.split('-')[0]).classList.add('tab-active');
+}
+
+function clearHistory() { if(confirm("Vin, yakin mau hapus riwayat tugas?")) { history = []; render(); } }
+
+updateClock();
 render();
