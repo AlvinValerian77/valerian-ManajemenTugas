@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manajemen Tugas | Alvin Valerian Rianto</title>
+
+    <link rel="icon" type="image/png" href="ftik.png">
+
+
+    <link rel="apple-touch-icon" href="ftik.png">
+
+
+    <meta name="theme-color" content="#3730a3">
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="text-slate-800">
+
+    <nav class="brand-gradient text-white sticky top-0 z-50 shadow-xl border-b-4 border-yellow-400">
+        <div class="max-w-6xl mx-auto p-4 md:p-6">
+            <div class="flex flex-col md:flex-row items-center justify-between gap-4">
+                <div class="flex items-center gap-4">
+                    <div class="p-0">
+                        <div class="h-16 w-16 rounded-full overflow-hidden border-2 border-white shadow-lg bg-white">
+                            <img src="alvin.png" alt="Foto Alvin" class="h-full w-full object-cover object-center">
+                        </div>
+                    </div>
+                    <div>
+                        <h1 class="text-xl font-extrabold tracking-tight uppercase leading-none">Manajemen Tugas</h1>
+                        <p class="text-[10px] text-yellow-400 font-bold uppercase tracking-widest mt-1">
+                            Alvin Valerian Rianto | Teknik Informatika
+                        </p>
+                    </div>
+                </div>
+                <div class="text-center md:text-right">
+                    <div id="clock" class="text-2xl font-mono font-bold text-yellow-400 leading-none">00:00:00</div>
+                    <div id="date" class="text-[10px] uppercase font-bold opacity-70">Memuat Tanggal...</div>
+                </div>
+            </div>
+
+            <div class="flex justify-center md:justify-start gap-4 md:gap-8 mt-6 overflow-x-auto">
+                <button onclick="switchPage('input-page')" id="btn-input" class="pb-2 px-2 transition-all tab-active uppercase text-[10px] md:text-xs tracking-widest whitespace-nowrap">
+                    <i class="fas fa-plus-circle mr-2"></i> Input Tugas
+                </button>
+                <button onclick="switchPage('active-page')" id="btn-active" class="pb-2 px-2 transition-all text-white/70 hover:text-white uppercase text-[10px] md:text-xs tracking-widest whitespace-nowrap">
+                    <i class="fas fa-list-check mr-2"></i> Daftar Tugas
+                </button>
+                <button onclick="switchPage('history-page')" id="btn-history" class="pb-2 px-2 transition-all text-white/70 hover:text-white uppercase text-[10px] md:text-xs tracking-widest whitespace-nowrap">
+                    <i class="fas fa-history mr-2"></i> Riwayat Selesai
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <main class="max-w-6xl mx-auto p-4 md:p-8">
+        
+        <div id="input-page" class="max-w-2xl mx-auto animate__animated animate__fadeIn">
+            <div class="bg-white rounded-3xl shadow-xl p-8 border border-slate-100">
+                <h2 class="text-2xl font-bold mb-6 flex items-center gap-3 text-blue-900 border-b pb-4">
+                    <i class="fas fa-edit"></i> Buat Tugas Baru
+                </h2>
+                <div class="space-y-5">
+                    <div>
+                        <label class="text-xs font-bold text-slate-400 uppercase ml-1">Nama Tugas / Proyek</label>
+                        <input type="text" id="taskInput" placeholder="Contoh: Pemrograman Web Lanjut" class="w-full p-4 bg-slate-50 border rounded-2xl focus:ring-2 focus:ring-blue-500 outline-none transition-all">
+                    </div>
+                    <div>
+                        <label class="text-xs font-bold text-slate-400 uppercase ml-1">Kategori / Mata Kuliah</label>
+                        <input type="text" id="subjectInput" placeholder="Contoh: Teknik Informatika" class="w-full p-4 bg-slate-50 border rounded-2xl focus:ring-2 focus:ring-blue-500 outline-none transition-all">
+                    </div>
+                    <div>
+                        <label class="text-xs font-bold text-slate-400 uppercase ml-1">Batas Deadline</label>
+                        <input type="date" id="dateInput" class="w-full p-4 bg-slate-50 border rounded-2xl focus:ring-2 focus:ring-blue-500 outline-none transition-all">
+                    </div>
+                    <button onclick="addTask()" class="w-full brand-gradient text-white font-bold py-5 rounded-2xl shadow-lg hover:brightness-110 active:scale-95 transition-all flex items-center justify-center gap-3 text-lg">
+                        <i class="fas fa-save"></i> SIMPAN KE DAFTAR
+                    </button>
+                    
+                    <div class="flex items-center justify-center gap-2 py-3 px-4 bg-amber-50 border border-amber-200 rounded-xl mt-2 animate__animated animate__pulse animate__infinite">
+                        <i class="fas fa-bell text-amber-500 text-sm"></i>
+                        <span class="text-[11px] font-bold text-amber-700 uppercase tracking-wide">Alarm akan muncul ketika - 1 hari deadline</span>
+                    </div>
+                </div>
+            </div>
+            <div class="mt-8 bg-blue-50 p-6 rounded-3xl border border-blue-100 flex items-start gap-4">
+                <i class="fas fa-lightbulb text-blue-500 mt-1"></i>
+                <p class="text-slate-600 text-sm leading-relaxed">Tugas yang kamu simpan akan muncul secara otomatis di halaman <b>Daftar Tugas</b> dan diurutkan berdasarkan deadline terdekat.</p>
+            </div>
+        </div>
+
+        <div id="active-page" class="hidden-page animate__animated animate__fadeIn">
+            <div class="max-w-4xl mx-auto space-y-6">
+                <div class="flex items-center justify-between">
+                    <h2 class="text-2xl font-extrabold text-blue-900"><i class="fas fa-tasks mr-2"></i> Tugas Saat Ini</h2>
+                    <span id="taskCount" class="bg-blue-600 text-white text-xs font-black px-5 py-2 rounded-full shadow-md uppercase">0 Tugas</span>
+                </div>
+                <div id="taskList" class="grid grid-cols-1 gap-5"></div>
+            </div>
+        </div>
+
+        <div id="history-page" class="max-w-4xl mx-auto hidden-page animate__animated animate__fadeIn">
+            <div class="space-y-6">
+                <div class="flex items-center justify-between">
+                    <h2 class="text-2xl font-extrabold text-slate-500"><i class="fas fa-check-double mr-2"></i> Log Penyelesaian</h2>
+                    <button onclick="clearHistory()" class="text-xs font-bold text-red-500 hover:bg-red-50 px-4 py-2 rounded-xl transition-all uppercase tracking-widest border border-red-100">
+                        <i class="fas fa-trash-alt mr-2"></i> Hapus Semua Riwayat
+                    </button>
+                </div>
+                <div id="historyList" class="grid grid-cols-1 gap-4"></div>
+            </div>
+        </div>
+
+    </main>
+
+    <audio id="alarmSound" loop preload="auto">
+        <source src="https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3" type="audio/mpeg">
+    </audio>
+
+    <script src="script.js"></script>
+</body>
+</html>
