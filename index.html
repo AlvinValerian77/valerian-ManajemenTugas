@@ -15,6 +15,34 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
     <link rel="stylesheet" href="style.css">
+
+    <script type="module">
+      import { initializeApp } from "https://www.gstatic.com/firebasejs/9.17.1/firebase-app.js";
+      import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, doc, deleteDoc, updateDoc } from "https://www.gstatic.com/firebasejs/9.17.1/firebase-firestore.js";
+
+      const firebaseConfig = {
+        apiKey: "AIzaSyAv4C2vMKB439ha3RESwVzw8x0LMLVYnkg",
+        authDomain: "manajemen-tugas-27df1.firebaseapp.com",
+        projectId: "manajemen-tugas-27df1",
+        storageBucket: "manajemen-tugas-27df1.firebasestorage.app",
+        messagingSenderId: "803500222779",
+        appId: "1:803500222779:web:978ec370b75916c0edd51e",
+        measurementId: "G-HJQ8ZMWV5T"
+      };
+
+      const app = initializeApp(firebaseConfig);
+      const db = getFirestore(app);
+
+      // Expose ke window agar script.js bisa mengaksesnya
+      window.db = db;
+      window.fs = { collection, addDoc, onSnapshot, query, orderBy, doc, deleteDoc, updateDoc };
+      
+      // Jalankan fungsi sinkronisasi setelah Firebase siap
+      if (typeof startSync === "function") {
+          startSync();
+      }
+    </script>
+
 </head>
 <body class="bg-[#F1F5F9] text-slate-900 overflow-x-hidden">
 
@@ -63,7 +91,7 @@
                     </div>
                     <div class="input-wrap">
                         <label><i class="fas fa-bell mr-2"></i>Setel Pengingat Alarm (Sebelum) </label>
-                        <div class="alarm-grid">
+                        <div class="alarm-grid">\
                             <label class="alarm-card"><input type="radio" name="reminder" value="1"><span>1 Jam</span></label>
                             <label class="alarm-card"><input type="radio" name="reminder" value="6"><span>6 Jam</span></label>
                             <label class="alarm-card"><input type="radio" name="reminder" value="12"><span>12 Jam</span></label>
